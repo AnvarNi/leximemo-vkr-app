@@ -1,0 +1,127 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  email String [unique, not null]
+  passwordHash String [not null]
+  name String
+  decks Deck [not null]
+  reviewHistory ReviewHistory [not null]
+  achievements Achievement [not null]
+  dailyStudyActivities DailyStudyActivity [not null]
+  stats UserStats
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Deck {
+  id String [pk]
+  title String [not null]
+  description String
+  userId String [not null]
+  user User [not null]
+  cards Card [not null]
+  reviewHistory ReviewHistory [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Card {
+  id String [pk]
+  word String [not null]
+  translation String [not null]
+  languageCode String
+  example String
+  imageUrl String
+  repetitionsCount Int [not null, default: 0]
+  intervalDays Int [not null, default: 0]
+  easeFactor Float [not null, default: 2.5]
+  lastReviewedAt DateTime
+  nextReviewAt DateTime
+  lastGrade ReviewGrade
+  mistakesCount Int [not null, default: 0]
+  deckId String [not null]
+  deck Deck [not null]
+  reviewHistory ReviewHistory [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table ReviewHistory {
+  id String [pk]
+  userId String [not null]
+  user User [not null]
+  deckId String [not null]
+  deck Deck [not null]
+  cardId String [not null]
+  card Card [not null]
+  grade ReviewGrade [not null]
+  previousIntervalDays Int
+  newIntervalDays Int [not null]
+  reviewedAt DateTime [default: `now()`, not null]
+}
+
+Table Achievement {
+  id String [pk]
+  userId String [not null]
+  user User [not null]
+  code String [not null]
+  title String [not null]
+  unlockedAt DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (userId, code) [unique]
+  }
+}
+
+Table DailyStudyActivity {
+  id String [pk]
+  userId String [not null]
+  user User [not null]
+  activityDate DateTime [not null]
+  reviewsCount Int [not null, default: 0]
+  sessionsCount Int [not null, default: 0]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (userId, activityDate) [unique]
+  }
+}
+
+Table UserStats {
+  userId String [pk]
+  user User [not null]
+  currentStreak Int [not null, default: 0]
+  longestStreak Int [not null, default: 0]
+  totalReviewedCards Int [not null, default: 0]
+  totalStudySessions Int [not null, default: 0]
+  lastStudyDate DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Enum ReviewGrade {
+  HARD
+  NORMAL
+  EASY
+}
+
+Ref: Deck.userId > User.id [delete: Cascade]
+
+Ref: Card.deckId > Deck.id [delete: Cascade]
+
+Ref: ReviewHistory.userId > User.id [delete: Cascade]
+
+Ref: ReviewHistory.deckId > Deck.id [delete: Cascade]
+
+Ref: ReviewHistory.cardId > Card.id [delete: Cascade]
+
+Ref: Achievement.userId > User.id [delete: Cascade]
+
+Ref: DailyStudyActivity.userId > User.id [delete: Cascade]
+
+Ref: UserStats.userId - User.id [delete: Cascade]
