@@ -257,3 +257,5 @@ AI-генерация работает только на сервере.
 - [`prisma/seed.mjs`](/Users/firkatdavletov/WebProjects/leximemo/prisma/seed.mjs)
 - [`docs/demo-script.md`](/Users/firkatdavletov/WebProjects/leximemo/docs/demo-script.md)
 - [`docs/architecture.md`](/Users/firkatdavletov/WebProjects/leximemo/docs/architecture.md)
+#   l e x i m e m o - v k r - a p p  
+ 
