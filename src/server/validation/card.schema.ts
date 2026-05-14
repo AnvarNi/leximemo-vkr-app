@@ -34,12 +34,29 @@ export const cardSchema = z.object({
     .trim()
     .max(1000, "Пример должен быть не длиннее 1000 символов.")
     .optional(),
-  imageUrl: z
-    .string()
-    .trim()
-    .url("imageUrl должен быть валидным URL.")
-    .max(1000, "URL изображения должен быть не длиннее 1000 символов.")
-    .optional(),
+  imageUrl: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") {
+        return value;
+      }
+
+      const normalized = value.trim();
+      return normalized.length === 0 ? undefined : normalized;
+    },
+    z
+      .string()
+      .url("imageUrl должен быть валидным URL.")
+      .max(1000, "URL изображения должен быть не длиннее 1000 символов.")
+      .optional(),
+  ),
+});
+
+export const cardsImportSchema = z.object({
+  cards: z
+    .array(cardSchema)
+    .min(1, "Массив cards должен содержать хотя бы одну карточку.")
+    .max(200, "За один импорт можно добавить не более 200 карточек."),
 });
 
 export type CardInput = z.infer<typeof cardSchema>;
+export type CardsImportInput = z.infer<typeof cardsImportSchema>;

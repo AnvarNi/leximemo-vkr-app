@@ -1,3 +1,6 @@
+import Image from "next/image";
+
+import type { AchievementCode } from "@/entities/achievement/model/types";
 import type { UserProgressDto } from "@/entities/progress/model/types";
 
 type ProgressOverviewProps = {
@@ -8,20 +11,21 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
 });
 
-function getDayLabel(value: number): string {
-  const mod10 = value % 10;
-  const mod100 = value % 100;
+const statsIconPaths = {
+  currentStreak: "/icons/ic_current_strike.png",
+  longestStreak: "/icons/ic_best_strike.png",
+  totalReviewedCards: "/icons/ic_total_repeats.png",
+  totalStudySessions: "/icons/ic_education_days.png",
+} as const;
 
-  if (mod10 === 1 && mod100 !== 11) {
-    return "день";
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return "дня";
-  }
-
-  return "дней";
-}
+const achievementIconPaths: Record<AchievementCode, string> = {
+  FIRST_REVIEW: "/icons/ic_first_repeat.png",
+  FIRST_DECK_COMPLETED: "/icons/ic_first_completed_card.png",
+  STREAK_3: "/icons/ic_three_days_strike.png",
+  STREAK_7: "/icons/ic_seven_days_strike.png",
+  REVIEWS_10: "/icons/ic_ten_repeats.png",
+  REVIEWS_50: "/icons/ic_fifty_repeats.png",
+};
 
 export function ProgressOverview({ progress }: ProgressOverviewProps) {
   const unlockedCount = progress.achievements.filter((achievement) => achievement.unlocked).length;
@@ -31,37 +35,61 @@ export function ProgressOverview({ progress }: ProgressOverviewProps) {
       <article className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-foreground">Прогресс обучения</h2>
 
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <li className="rounded-xl border border-border bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-muted">Текущий streak</p>
+        <ul className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
+          <li className="min-h-36 rounded-xl border border-border bg-white p-4">
+            <Image
+              src={statsIconPaths.currentStreak}
+              alt=""
+              width={32}
+              height={32}
+              className="mb-3"
+            />
+            <p className="text-xs uppercase tracking-wide text-muted">Текущая серия</p>
             <p className="mt-2 text-2xl font-semibold text-foreground">
               {progress.stats.currentStreak}
             </p>
-            <p className="mt-1 text-xs text-muted">{getDayLabel(progress.stats.currentStreak)}</p>
           </li>
 
-          <li className="rounded-xl border border-border bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-muted">Лучший streak</p>
+          <li className="min-h-36 rounded-xl border border-border bg-white p-4">
+            <Image
+              src={statsIconPaths.longestStreak}
+              alt=""
+              width={32}
+              height={32}
+              className="mb-3"
+            />
+            <p className="text-xs uppercase tracking-wide text-muted">Лучшая серия</p>
             <p className="mt-2 text-2xl font-semibold text-foreground">
               {progress.stats.longestStreak}
             </p>
-            <p className="mt-1 text-xs text-muted">{getDayLabel(progress.stats.longestStreak)}</p>
           </li>
 
-          <li className="rounded-xl border border-border bg-white p-3">
+          <li className="min-h-36 rounded-xl border border-border bg-white p-4">
+            <Image
+              src={statsIconPaths.totalReviewedCards}
+              alt=""
+              width={32}
+              height={32}
+              className="mb-3"
+            />
             <p className="text-xs uppercase tracking-wide text-muted">Всего повторений</p>
             <p className="mt-2 text-2xl font-semibold text-foreground">
               {progress.stats.totalReviewedCards}
             </p>
-            <p className="mt-1 text-xs text-muted">карточек</p>
           </li>
 
-          <li className="rounded-xl border border-border bg-white p-3">
+          <li className="min-h-36 rounded-xl border border-border bg-white p-4">
+            <Image
+              src={statsIconPaths.totalStudySessions}
+              alt=""
+              width={32}
+              height={32}
+              className="mb-3"
+            />
             <p className="text-xs uppercase tracking-wide text-muted">Учебных дней</p>
             <p className="mt-2 text-2xl font-semibold text-foreground">
               {progress.stats.totalStudySessions}
             </p>
-            <p className="mt-1 text-xs text-muted">дней с review-активностью</p>
           </li>
         </ul>
 
@@ -90,8 +118,23 @@ export function ProgressOverview({ progress }: ProgressOverviewProps) {
                   : "border-border bg-white"
               }`}
             >
-              <p className="text-sm font-medium text-foreground">{achievement.title}</p>
-              <p className="mt-1 text-xs text-muted">{achievement.description}</p>
+              <div className="flex items-start gap-3">
+                <Image
+                  src={achievementIconPaths[achievement.code]}
+                  alt=""
+                  width={36}
+                  height={36}
+                  className={
+                    achievement.unlocked
+                      ? "size-9 shrink-0 object-contain"
+                      : "size-9 shrink-0 object-contain opacity-40 grayscale"
+                  }
+                />
+                <div>
+                  <p className="text-sm font-medium text-foreground">{achievement.title}</p>
+                  <p className="mt-1 text-xs text-muted">{achievement.description}</p>
+                </div>
+              </div>
               <p className="mt-2 text-xs text-muted">
                 {achievement.unlocked && achievement.unlockedAt
                   ? `Открыто: ${dateFormatter.format(new Date(achievement.unlockedAt))}`

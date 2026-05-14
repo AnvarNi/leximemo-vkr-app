@@ -1,21 +1,21 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import type {
-  AISaveGeneratedRequestDto,
-  AISaveGeneratedResponseDto,
-} from "@/entities/ai/model/types";
 import { getCurrentUserId } from "@/server/auth/session";
 import { createManyCardsInDeck } from "@/server/cards/card.service";
 import { userOwnsDeck } from "@/server/decks/deck.service";
 import { getFirstValidationError } from "@/server/http/validation";
-import { aiGeneratedCardsSaveSchema } from "@/server/validation/ai.schema";
+import { cardsImportSchema } from "@/server/validation/card.schema";
 import type { ApiError, ApiSuccess } from "@/shared/types/api";
 
-type SaveRouteContext = {
+type ImportRouteContext = {
   params: Promise<{
     deckId: string;
   }>;
+};
+
+type ImportCardsResponseDto = {
+  savedCount: number;
 };
 
 function unauthorized() {
@@ -48,7 +48,7 @@ function notFound() {
   );
 }
 
-export async function POST(request: Request, { params }: SaveRouteContext) {
+export async function POST(request: Request, { params }: ImportRouteContext) {
   const userId = await getCurrentUserId();
 
   if (!userId) {
@@ -63,20 +63,11 @@ export async function POST(request: Request, { params }: SaveRouteContext) {
     return badRequest("Некорректный JSON в теле запроса.");
   }
 
-  const parsed = aiGeneratedCardsSaveSchema.safeParse(body);
+  const parsed = cardsImportSchema.safeParse(body);
 
   if (!parsed.success) {
     return badRequest(getFirstValidationError(parsed.error));
   }
-
-  const payload: AISaveGeneratedRequestDto = {
-    cards: parsed.data.cards.map((card) => ({
-      word: card.word,
-      translation: card.translation,
-      example: card.example ?? null,
-      imagePrompt: card.imagePrompt ?? null,
-    })),
-  };
 
   const { deckId } = await params;
   const ownsDeck = await userOwnsDeck(userId, deckId);
@@ -85,15 +76,7 @@ export async function POST(request: Request, { params }: SaveRouteContext) {
     return notFound();
   }
 
-  const savedCount = await createManyCardsInDeck(
-    userId,
-    deckId,
-    payload.cards.map((card) => ({
-      word: card.word,
-      translation: card.translation,
-      example: card.example,
-    })),
-  );
+  const savedCount = await createManyCardsInDeck(userId, deckId, parsed.data.cards);
 
   if (savedCount === null) {
     return notFound();
@@ -102,7 +85,7 @@ export async function POST(request: Request, { params }: SaveRouteContext) {
   revalidatePath(`/decks/${deckId}`);
   revalidatePath("/decks");
 
-  return NextResponse.json<ApiSuccess<AISaveGeneratedResponseDto>>(
+  return NextResponse.json<ApiSuccess<ImportCardsResponseDto>>(
     {
       ok: true,
       data: {
